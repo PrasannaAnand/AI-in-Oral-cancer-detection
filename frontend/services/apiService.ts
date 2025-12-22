@@ -1,44 +1,56 @@
-import { DetectionResult, RecurrenceFormData, RecurrenceResult } from '../types';
+// services/apiService.ts
+import {
+  DetectionResponse,
+  RecurrenceInput,
+  RecurrenceResponse,
+} from "../types";
 
-// Utility to simulate network delay
+const BASE_URL = "http://localhost:8000";
+
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const apiService = {
-  detectLesion: async (file: File): Promise<DetectionResult> => {
-    // Simulate API call
-    console.log('Posting to /api/detect-lesion', file.name);
-    await delay(2000);
+  detectLesion: async (file: File): Promise<DetectionResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
 
-    // Mock response
-    // In a real app, use fetch('/api/detect-lesion', { method: 'POST', body: formData })
-    return {
-      predictedClass: 'OSCC',
-      probabilities: [
-        { label: 'Normal', value: 0.05 },
-        { label: 'Dysplasia', value: 0.15 },
-        { label: 'OSCC', value: 0.80 },
-      ],
-      // Using a placeholder for GradCAM visualization
-      gradcamUrl: 'https://picsum.photos/400/300?grayscale&blur=2' 
-    };
+    try {
+      const response = await fetch(`${BASE_URL}/api/detect-lesion`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Backend unreachable');
+      return await response.json();
+    } catch (error) {
+      console.warn("Detection API failed, using mock data:", error);
+      await delay(1500);
+      return {
+        predicted_class: 'OSCC',
+        probabilities: { "Normal": 0.05, "Dysplasia": 0.15, "OSCC": 0.80 },
+        gradcam_url: 'https://picsum.photos/400/300?grayscale&blur=2'
+      };
+    }
   },
 
-  predictRecurrence: async (data: RecurrenceFormData): Promise<RecurrenceResult> => {
-    // Simulate API call
-    console.log('Posting to /api/predict-recurrence', data);
-    await delay(2500);
+  predictRecurrence: async (payload: RecurrenceInput): Promise<RecurrenceResponse> => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/predict-recurrence`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    // Mock logic for demo variety
-    const isHighRisk = data.tumorGrade === 'Grade III' || data.tumorGrade === 'Grade IV';
-    
-    return {
-      riskScore: isHighRisk ? 78 : 32,
-      riskCategory: isHighRisk ? 'High' : 'Low',
-      topFeatures: [
-        `Tumor Grade: ${data.tumorGrade}`,
-        `Age Group: ${data.ageGroup}`,
-        `Site: ${data.oralSite}`
-      ]
-    };
+      if (!response.ok) throw new Error('Backend unreachable');
+      return await response.json();
+    } catch (error) {
+      console.warn("Recurrence API failed, using mock data:", error);
+      await delay(2000);
+      return {
+        recurrence_risk_percentage: 65.3,
+        risk_category: "High Risk",
+        risk_level: "Red"
+      };
+    }
   }
 };

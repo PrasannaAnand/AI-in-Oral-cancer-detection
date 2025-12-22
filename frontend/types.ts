@@ -1,29 +1,33 @@
+// types.ts
+
 export type PredictionClass = 'Normal' | 'Dysplasia' | 'OSCC';
 
-export interface DetectionResult {
-  predictedClass: PredictionClass;
-  probabilities: {
-    label: string;
-    value: number;
-  }[];
-  gradcamUrl?: string;
+// Lesion / Cancer Detection types
+export interface DetectionResponse {
+  predicted_class: string;
+  probabilities: Record<string, number>;
+  gradcam_url?: string;
 }
 
-export type RiskCategory = 'Low' | 'Intermediate' | 'High';
-
-export interface RecurrenceResult {
-  riskScore: number; // 0-100
-  riskCategory: RiskCategory;
-  topFeatures: string[];
-}
-
-export interface RecurrenceFormData {
-  ageGroup: string;
+// Recurrence Prediction types (LightGBM Inputs)
+export interface RecurrenceInput {
   sex: string;
-  oralSite: string;
-  tumorGrade: string;
-  treatmentSequence: string;
-  chemotherapy: string;
+  race: string;
+  site_recode: string;
+  grade_recode: string;
+  total_malig_tumors: number;
+  total_benign_tumors: number;
+  rx_summ_surg_prim_site: number;
+  rx_summ_surg_rad_seq: string;
+  chemotherapy_recode: string;
+  radiation_recode: string;
+}
+
+export interface RecurrenceResponse {
+  recurrence_risk_percentage: number;
+  risk_category: string;
+  risk_level: string; // "Green", "Yellow", "Red"
+  top_features?: Record<string, number>;
 }
 
 export enum AppTab {

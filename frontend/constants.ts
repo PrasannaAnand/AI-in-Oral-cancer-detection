@@ -1,30 +1,35 @@
-export const AGE_GROUPS = [
-  '<40', '40–49', '50–59', '60–69', '70+'
-];
-
-export const ORAL_SITES = [
-  'Tongue',
-  'Floor of mouth',
-  'Gum and other mouth',
-  'Other oral cavity and pharynx'
-];
-
-export const TUMOR_GRADES = [
-  'Grade I',
-  'Grade II',
-  'Grade III',
-  'Grade IV',
+export const RACES = [
+  'White',
+  'Black',
+  'American Indian/Alaska Native',
+  'Asian or Pacific Islander',
   'Unknown'
 ];
 
-export const TREATMENT_SEQUENCES = [
-  'No radiation and/or cancer-directed surgery',
-  'Radiation prior to surgery',
+export const SITE_RECODES = [
+  'Tongue',
+  'Floor of mouth',
+  'Gum and other mouth',
+  'Other oral cavity',
+  'Oropharynx',
+  'Unknown'
+];
+
+export const GRADE_RECODES = [
+  'Well differentiated; Grade I',
+  'Moderately differentiated; Grade II',
+  'Poorly differentiated; Grade III',
+  'Undifferentiated; anaplastic; Grade IV',
+  'Unknown'
+];
+
+export const SURG_RAD_SEQUENCES = [
+  'No radiation and/or surgery',
+  'Radiation before surgery',
   'Radiation after surgery',
   'Radiation before and after surgery',
-  'Intraoperative radiation',
-  'Intraoperative rad with other rad before/after surgery',
-  'Surgery both before and after radiation',
-  'Sequence unknown, but both were given',
-  'Unknown / blank'
+  'Intraoperative radiation with other radiation',
+  'Sequence unknown'
 ];
+
+export const YES_NO_UNKNOWN = ['Yes', 'No', 'Unknown'];
