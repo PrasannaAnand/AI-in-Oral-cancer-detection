@@ -1,9 +1,35 @@
 import React, { useState } from 'react';
-import { Loader2, AlertCircle, Activity, CheckCircle, AlertTriangle, Info } from 'lucide-react';
+import { Loader2, AlertCircle, Activity } from 'lucide-react';
 import { Disclaimer } from './Disclaimer';
 import { apiService } from '../services/apiService';
 import { RecurrenceInput, RecurrenceResponse } from '../types';
 import { RACES, SITE_RECODES, GRADE_RECODES, SURG_RAD_SEQUENCES, YES_NO_UNKNOWN } from '../constants';
+
+// Map UI radiation options to SEER training labels
+function mapRadiationUIToModel(value: string): string {
+  switch (value) {
+    case "Yes":
+      return "Beam radiation";
+    case "No":
+      return "None/Unknown";
+    case "Unknown":
+    default:
+      return "Recommended, unknown if administered";
+  }
+}
+
+// Map UI chemo options to SEER labels (adjust strings to your data if needed)
+function mapChemoUIToModel(value: string): string {
+  switch (value) {
+    case "Yes":
+      return "Yes";
+    case "No":
+      return "No/Unknown";   // or "No/unk" if that is the exact SEER value
+    case "Unknown":
+    default:
+      return "Unknown";
+  }
+}
 
 const INITIAL_FORM: RecurrenceInput = {
   sex: '',
@@ -15,7 +41,8 @@ const INITIAL_FORM: RecurrenceInput = {
   rx_summ_surg_prim_site: 0,
   rx_summ_surg_rad_seq: '',
   chemotherapy_recode: '',
-  radiation_recode: ''
+  radiation_recode: '',
+  age_group: '',
 };
 
 export const RecurrenceView: React.FC = () => {
@@ -26,14 +53,15 @@ export const RecurrenceView: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: type === 'number' ? parseInt(value) || 0 : value 
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'number' ? parseInt(value) || 0 : value
     }));
   };
 
   const isFormValid = () => {
     return (
+      formData.age_group !== '' &&
       formData.sex !== '' &&
       formData.race !== '' &&
       formData.site_recode !== '' &&
@@ -52,8 +80,14 @@ export const RecurrenceView: React.FC = () => {
     setError(null);
     setResult(null);
 
+    const payload: RecurrenceInput = {
+      ...formData,
+      chemotherapy_recode: mapChemoUIToModel(formData.chemotherapy_recode),
+      radiation_recode: mapRadiationUIToModel(formData.radiation_recode),
+    };
+
     try {
-      const data = await apiService.predictRecurrence(formData);
+      const data = await apiService.predictRecurrence(payload);
       setResult(data);
     } catch (err: any) {
       setError("Unable to connect to prediction server. Please try again.");
@@ -77,75 +111,207 @@ export const RecurrenceView: React.FC = () => {
           </h2>
           <form onSubmit={handleSubmit} id="recurrence-form" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              {/* Age group with exact SEER labels */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Age group *</label>
+                <select
+                  name="age_group"
+                  value={formData.age_group}
+                  onChange={handleInputChange}
+                  className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">Select Age group</option>
+                  <option value="00 years">00 years</option>
+                  <option value="01-04 years">01-04 years</option>
+                  <option value="05-09 years">05-09 years</option>
+                  <option value="10-14 years">10-14 years</option>
+                  <option value="15-19 years">15-19 years</option>
+                  <option value="20-24 years">20-24 years</option>
+                  <option value="25-29 years">25-29 years</option>
+                  <option value="30-34 years">30-34 years</option>
+                  <option value="35-39 years">35-39 years</option>
+                  <option value="40-44 years">40-44 years</option>
+                  <option value="45-49 years">45-49 years</option>
+                  <option value="50-54 years">50-54 years</option>
+                  <option value="55-59 years">55-59 years</option>
+                  <option value="60-64 years">60-64 years</option>
+                  <option value="65-69 years">65-69 years</option>
+                  <option value="70-74 years">70-74 years</option>
+                  <option value="75-79 years">75-79 years</option>
+                  <option value="80-84 years">80-84 years</option>
+                  <option value="85-89 years">85-89 years</option>
+                  <option value="90+ years">90+ years</option>
+                </select>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Sex *</label>
-                <select name="sex" value={formData.sex} onChange={handleInputChange} className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" required>
+                <select
+                  name="sex"
+                  value={formData.sex}
+                  onChange={handleInputChange}
+                  className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  required
+                >
                   <option value="">Select Sex</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                 </select>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Race *</label>
-                <select name="race" value={formData.race} onChange={handleInputChange} className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" required>
+                <select
+                  name="race"
+                  value={formData.race}
+                  onChange={handleInputChange}
+                  className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  required
+                >
                   <option value="">Select Race</option>
-                  {RACES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  {RACES.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
                 </select>
               </div>
+
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-1">Tumor Site *</label>
-                <select name="site_recode" value={formData.site_recode} onChange={handleInputChange} className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" required>
+                <select
+                  name="site_recode"
+                  value={formData.site_recode}
+                  onChange={handleInputChange}
+                  className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  required
+                >
                   <option value="">Select Site</option>
-                  {SITE_RECODES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  {SITE_RECODES.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
                 </select>
               </div>
+
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-1">Tumor Grade *</label>
-                <select name="grade_recode" value={formData.grade_recode} onChange={handleInputChange} className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" required>
+                <select
+                  name="grade_recode"
+                  value={formData.grade_recode}
+                  onChange={handleInputChange}
+                  className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  required
+                >
                   <option value="">Select Grade</option>
-                  {GRADE_RECODES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  {GRADE_RECODES.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
                 </select>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Malignant Tumors *</label>
-                <input type="number" min="0" name="total_malig_tumors" value={formData.total_malig_tumors} onChange={handleInputChange} className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" />
+                <input
+                  type="number"
+                  min="0"
+                  name="total_malig_tumors"
+                  value={formData.total_malig_tumors}
+                  onChange={handleInputChange}
+                  className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Benign Tumors *</label>
-                <input type="number" min="0" name="total_benign_tumors" value={formData.total_benign_tumors} onChange={handleInputChange} className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" />
+                <input
+                  type="number"
+                  min="0"
+                  name="total_benign_tumors"
+                  value={formData.total_benign_tumors}
+                  onChange={handleInputChange}
+                  className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                />
               </div>
+
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1">Primary Surgery Code *</label>
-                <input type="number" name="rx_summ_surg_prim_site" value={formData.rx_summ_surg_prim_site} onChange={handleInputChange} className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1">
+                  Primary Surgery Code *
+                </label>
+                <input
+                  type="number"
+                  name="rx_summ_surg_prim_site"
+                  value={formData.rx_summ_surg_prim_site}
+                  onChange={handleInputChange}
+                  className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                />
               </div>
+
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-1">Treatment Sequence *</label>
-                <select name="rx_summ_surg_rad_seq" value={formData.rx_summ_surg_rad_seq} onChange={handleInputChange} className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" required>
+                <select
+                  name="rx_summ_surg_rad_seq"
+                  value={formData.rx_summ_surg_rad_seq}
+                  onChange={handleInputChange}
+                  className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  required
+                >
                   <option value="">Select Sequence</option>
-                  {SURG_RAD_SEQUENCES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  {SURG_RAD_SEQUENCES.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
                 </select>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Chemotherapy *</label>
-                <select name="chemotherapy_recode" value={formData.chemotherapy_recode} onChange={handleInputChange} className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" required>
+                <select
+                  name="chemotherapy_recode"
+                  value={formData.chemotherapy_recode}
+                  onChange={handleInputChange}
+                  className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  required
+                >
                   <option value="">Select Option</option>
-                  {YES_NO_UNKNOWN.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  {YES_NO_UNKNOWN.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
                 </select>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Radiation *</label>
-                <select name="radiation_recode" value={formData.radiation_recode} onChange={handleInputChange} className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" required>
+                <select
+                  name="radiation_recode"
+                  value={formData.radiation_recode}
+                  onChange={handleInputChange}
+                  className="w-full bg-white rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  required
+                >
                   <option value="">Select Option</option>
-                  {YES_NO_UNKNOWN.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  {YES_NO_UNKNOWN.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
                 </select>
               </div>
             </div>
           </form>
         </div>
-        <button form="recurrence-form" type="submit" disabled={loading || !isFormValid()} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2">
+
+        <button
+          form="recurrence-form"
+          type="submit"
+          disabled={loading || !isFormValid()}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2"
+        >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Predict Recurrence Risk"}
         </button>
-        {error && <div className="p-4 bg-red-50 text-red-700 rounded-lg flex items-center gap-2"><AlertCircle className="w-5 h-5 flex-shrink-0" />{error}</div>}
+
+        {error && (
+          <div className="p-4 bg-red-50 text-red-700 rounded-lg flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            {error}
+          </div>
+        )}
       </div>
 
       <div className="lg:col-span-5">
@@ -159,17 +325,33 @@ export const RecurrenceView: React.FC = () => {
           ) : (
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
               <div className="text-center p-8 bg-slate-50 rounded-xl border border-slate-100">
-                <p className="text-sm text-slate-500 font-medium mb-2 uppercase tracking-wide">Recurrence Probability</p>
-                <div className={`text-6xl font-black mb-6 ${result.risk_level === 'Red' ? 'text-red-600' : result.risk_level === 'Yellow' ? 'text-yellow-600' : 'text-green-600'}`}>
-                  {result.recurrence_risk_percentage.toFixed(1)}<span className="text-2xl text-slate-400 font-normal">%</span>
+                <p className="text-sm text-slate-500 font-medium mb-2 uppercase tracking-wide">
+                  Recurrence Probability
+                </p>
+                <div
+                  className={`text-6xl font-black mb-6 ${
+                    result.risk_level === 'Red'
+                      ? 'text-red-600'
+                      : result.risk_level === 'Yellow'
+                      ? 'text-yellow-600'
+                      : 'text-green-600'
+                  }`}
+                >
+                  {result.recurrence_risk_percentage.toFixed(1)}
+                  <span className="text-2xl text-slate-400 font-normal">%</span>
                 </div>
-                <div className={`inline-flex items-center gap-2 px-6 py-2 rounded-full font-bold text-base border shadow-sm ${getRiskBadgeStyles(result.risk_level)}`}>
+                <div
+                  className={`inline-flex items-center gap-2 px-6 py-2 rounded-full font-bold text-base border shadow-sm ${getRiskBadgeStyles(
+                    result.risk_level
+                  )}`}
+                >
                   {result.risk_category}
                 </div>
               </div>
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
                 <p className="text-sm text-blue-800 leading-relaxed">
-                  <span className="font-bold">Interpretation:</span> This score estimates probability of poor outcome based on clinical variables (demographics, site, grade, treatment).
+                  <span className="font-bold">Interpretation:</span> This score estimates probability of poor
+                  outcome based on clinical variables (demographics, site, grade, treatment).
                 </p>
               </div>
               <Disclaimer />

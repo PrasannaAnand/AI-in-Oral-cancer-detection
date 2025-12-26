@@ -21,7 +21,9 @@ export interface RecurrenceInput {
   rx_summ_surg_rad_seq: string;
   chemotherapy_recode: string;
   radiation_recode: string;
+  age_group: string;   // NEW
 }
+
 
 export interface RecurrenceResponse {
   recurrence_risk_percentage: number;

@@ -6,14 +6,20 @@ export const RACES = [
   'Unknown'
 ];
 
+// constants.ts - EXACT Site recode values
 export const SITE_RECODES = [
-  'Tongue',
-  'Floor of mouth',
-  'Gum and other mouth',
-  'Other oral cavity',
-  'Oropharynx',
-  'Unknown'
+  "Tongue",
+  "Tonsil", 
+  "Gum and Other Mouth",
+  "Salivary Gland",
+  "Lip",
+  "Hypopharynx",
+  "Floor of Mouth",
+  "Nasopharynx",
+  "Oropharynx",
+  "Other Oral Cavity and Pharynx"
 ];
+
 
 export const GRADE_RECODES = [
   'Well differentiated; Grade I',
@@ -23,13 +29,17 @@ export const GRADE_RECODES = [
   'Unknown'
 ];
 
+// constants.ts - EXACT RX Summ--Surg/Rad Seq values
 export const SURG_RAD_SEQUENCES = [
-  'No radiation and/or surgery',
-  'Radiation before surgery',
-  'Radiation after surgery',
-  'Radiation before and after surgery',
-  'Intraoperative radiation with other radiation',
-  'Sequence unknown'
+  "No radiation and/or no surgery; unknown if surgery and/or radiation given",
+  "Radiation after surgery",
+  "Radiation prior to surgery",
+  "Radiation before and after surgery",
+  "Sequence unknown, but both were given",
+  "Intraoperative rad with other rad before/after surgery",
+  "Intraoperative radiation",
+  "Surgery both before and after radiation"
 ];
+
 
 export const YES_NO_UNKNOWN = ['Yes', 'No', 'Unknown'];
