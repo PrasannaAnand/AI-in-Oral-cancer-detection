@@ -1,16 +1,34 @@
 import joblib
 import pandas as pd
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any
 
-app = FastAPI()
 
-# Load everything
-model = joblib.load("recurrence_model.pkl")
-encoders = joblib.load("encoders.pkl")
-feature_names = joblib.load("feature_names.pkl")
-frontend_mapping = joblib.load("frontend_mapping.pkl")
+
+app = FastAPI()
+origins = [
+    "http://localhost:5173",  # Vite dev
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "*"  # during development only
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],   # important: lets FastAPI handle OPTIONS
+    allow_headers=["*"],
+)
+
+model = joblib.load("models/recurrence_model.pkl")
+encoders = joblib.load("models/encoders.pkl")
+feature_names = joblib.load("models/feature_names.pkl")
+frontend_mapping = joblib.load("models/frontend_mapping.pkl")
+
 
 class PredictionInput(BaseModel):
     age_group: str
