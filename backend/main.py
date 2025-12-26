@@ -1,34 +1,19 @@
+import joblib
+import pandas as pd
 from fastapi import FastAPI
 from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
-import joblib
-import numpy as np
-app = FastAPI()
-
-# Allow your React dev server
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,          # or ["*"] during local dev
-    allow_credentials=True,
-    allow_methods=["*"],            # allow POST, OPTIONS, etc.
-    allow_headers=["*"],
-)
+from typing import Dict, Any
 
 app = FastAPI()
 
-# Load at startup
-model = joblib.load("models/lightgbm_recurrence_model.joblib")
-encoders = joblib.load("models/label_encoders.joblib")
-metadata = joblib.load("models/model_metadata.joblib")
+# Load everything
+model = joblib.load("recurrence_model.pkl")
+encoders = joblib.load("encoders.pkl")
+feature_names = joblib.load("feature_names.pkl")
+frontend_mapping = joblib.load("frontend_mapping.pkl")
 
-FEATURE_COLUMNS = metadata["feature_names"]
-
-class RecurrenceInput(BaseModel):
+class PredictionInput(BaseModel):
+    age_group: str
     sex: str
     race: str
     site_recode: str
@@ -40,43 +25,20 @@ class RecurrenceInput(BaseModel):
     chemotherapy_recode: str
     radiation_recode: str
 
-def preprocess(payload: RecurrenceInput):
-    x = {}
-    x["sex"] = payload.sex
-    x["race"] = payload.race
-    x["Site recode ICD-O-3/WHO 2008"] = payload.site_recode
-    x["Grade Recode (thru 2017)"] = payload.grade_recode
-    x["Total number of in situ/malignant tumors for patient"] = payload.total_malig_tumors
-    x["Total number of benign/borderline tumors for patient"] = payload.total_benign_tumors
-    x["RX Summ--Surg Prim Site (1998+)"] = payload.rx_summ_surg_prim_site
-    x["RX Summ--Surg/Rad Seq"] = payload.rx_summ_surg_rad_seq
-    x["Chemotherapy recode (yes, no/unk)"] = payload.chemotherapy_recode
-    x["Radiation recode"] = payload.radiation_recode
-
-    # apply encoders in same way as in training
-    for col, enc in encoders.items():
-        if col in x:
-            x[col] = enc.transform([str(x[col])])[0]
-
-    row = np.array([[x[c] for c in FEATURE_COLUMNS]])
-    return row
-
-def categorize(risk_percent: float):
-    if risk_percent < 20:
-        return "Low Risk", "Green"
-    elif risk_percent < 50:
-        return "Intermediate Risk", "Yellow"
-    else:
-        return "High Risk", "Red"
-
 @app.post("/api/predict-recurrence")
-def predict_recurrence(data: RecurrenceInput):
-    X = preprocess(data)
-    prob = model.predict_proba(X)[0, 1]
-    risk_percent = float(prob * 100.0)
-    risk_category, risk_level = categorize(risk_percent)
+def predict_recurrence(data: PredictionInput):
+    # EXACT feature order + names from training
+    X = pd.DataFrame([data.dict()], columns=feature_names)
+    
+    # Encode categoricals (exact same encoders)
+    for col, encoder in encoders.items():
+        X[col] = encoder.transform(X[col].astype(str))
+    
+    # Predict
+    pred = model.predict_proba(X)[0][1] * 100
+    
     return {
-        "recurrence_risk_percentage": round(risk_percent, 1),
-        "risk_category": risk_category,
-        "risk_level": risk_level
+        "recurrence_risk_percentage": float(pred),
+        "risk_level": "Red" if pred > 50 else "Yellow" if pred > 20 else "Green",
+        "risk_category": "High" if pred > 50 else "Medium" if pred > 20 else "Low"
     }
