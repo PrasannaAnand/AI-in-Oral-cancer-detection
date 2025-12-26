@@ -1,7 +1,23 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 import joblib
 import numpy as np
+app = FastAPI()
+
+# Allow your React dev server
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,          # or ["*"] during local dev
+    allow_credentials=True,
+    allow_methods=["*"],            # allow POST, OPTIONS, etc.
+    allow_headers=["*"],
+)
 
 app = FastAPI()
 
