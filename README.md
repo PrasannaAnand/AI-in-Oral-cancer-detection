@@ -1,14 +1,14 @@
 AI-Based Oral Cancer Detection & Recurrence Prediction System
 RVCE Capstone Project | Information Science & Engineering | Dec 2025
 
-[![Backend Status](https://img.shields.io/badge/Backend-Fast![Frontend Status](https://img.shields.io/badge/Frontend-Vue![Accuracy](https://img.shields.io/badge/Detection-87https://github.com/yourusername/AI-in-Oralhttps://img.shields.io/badge/Recurrence-79https://github.com/yourusername/AI-in-Oral 🎯 Project Overview
+/AI-in-Oral-Cancer 🎯 Project Overview
 End-to-end clinical AI system for oral cancer detection (EfficientNetB3) and recurrence risk prediction (LightGBM) using SEER dataset. Deployed as fullstack web app with FastAPI backend + Vue.js frontend.
 
 Clinical Workflow:
 
-📸 Upload oral lesion image → 87.3% cancer probability
+📸 Upload oral lesion image → get cancer probability
 
-🩺 Enter clinical data → 67.2% recurrence risk
+🩺 Enter clinical data → get recurrence risk
 
 🎨 SHAP explanations + risk badges (Red/Yellow/Green)
 
