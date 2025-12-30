@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { FileUpload } from './FileUpload';
@@ -11,6 +11,7 @@ export const DetectionView: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DetectionResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const chartRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,11 +31,11 @@ export const DetectionView: React.FC = () => {
     }
   };
 
+  // FIXED: Match backend response exactly
   const getBarColor = (label: string) => {
-    if (label.includes('Normal')) return '#22c55e';
-    if (label.includes('Dysplasia')) return '#f59e0b';
-    if (label.includes('OSCC')) return '#ef4444';
-    return '#94a3b8';
+    if (label.includes('Non-cancerous')) return '#22c55e';  // Green
+    if (label.includes('Cancerous')) return '#ef4444';      // Red
+    return '#94a3b8';                                       // Gray
   };
 
   // Convert Record<string, number> to Array<{label, value}> for Recharts
@@ -43,8 +44,10 @@ export const DetectionView: React.FC = () => {
     value
   })) : [];
 
+  // FIX: Ensure chart container has explicit dimensions
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-8 p-4 min-h-screen">
+      {/* Tailwind CDN Warning Fix: Remove script tag from index.html */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
         <h2 className="text-xl font-semibold text-slate-800 mb-6 flex items-center gap-2">
           Lesion Detection
@@ -84,21 +87,42 @@ export const DetectionView: React.FC = () => {
               <div className="mb-6">
                 <p className="text-sm text-slate-500 mb-1">Predicted Class</p>
                 <div className={`text-3xl font-bold ${
-                  result.predicted_class.includes('OSCC') ? 'text-red-600' :
-                  result.predicted_class.includes('Dysplasia') ? 'text-amber-600' : 'text-green-600'
+                  result.prediction === 'Cancerous' ? 'text-red-600' : 'text-green-600'
                 }`}>
-                  {result.predicted_class}
+                  {result.prediction}
                 </div>
+                <p className="text-sm text-slate-500 mt-2">
+                  Confidence: {(result.confidence * 100).toFixed(1)}%
+                </p>
               </div>
 
-              <div className="h-48 w-full">
+              {/* FIXED: Explicit chart dimensions */}
+              <div className="w-full h-64 min-h-[256px] bg-slate-50 rounded-lg p-4 border border-slate-200">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart layout="vertical" data={chartData} margin={{ left: 40, right: 20 }}>
+                  <BarChart 
+                    layout="vertical" 
+                    data={chartData} 
+                    margin={{ top: 5, right: 20, left: 40, bottom: 5 }}
+                  >
                     <XAxis type="number" hide domain={[0, 1]} />
-                    <YAxis dataKey="label" type="category" width={80} tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
-                    <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
-                       {chartData.map((entry, index) => (
+                    <YAxis 
+                      dataKey="label" 
+                      type="category" 
+                      width={100} 
+                      tick={{ fill: '#475569', fontSize: 12 }} 
+                      axisLine={false} 
+                      tickLine={false} 
+                    />
+                    <Tooltip 
+                      cursor={{fill: 'transparent'}} 
+                      contentStyle={{ 
+                        borderRadius: '8px', 
+                        border: 'none', 
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' 
+                      }} 
+                    />
+                    <Bar dataKey="value" radius={[4, 4, 4, 4]} barSize={28}>
+                      {chartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={getBarColor(entry.label)} />
                       ))}
                     </Bar>
@@ -108,7 +132,7 @@ export const DetectionView: React.FC = () => {
             </div>
 
             <div className="flex-1 border-t md:border-t-0 md:border-l border-slate-100 md:pl-8 pt-6 md:pt-0">
-              <h3 className="text-lg font-medium text-slate-700 mb-4">Grad-CAM Visualization</h3>
+              <h3 className="text-lg font-medium text-slate-700 mb-4">Image Analysis</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">Original</p>
@@ -116,14 +140,17 @@ export const DetectionView: React.FC = () => {
                     {file && <img src={URL.createObjectURL(file)} alt="Original" className="w-full h-full object-cover" />}
                   </div>
                 </div>
-                {result.gradcam_url && (
-                  <div>
-                    <p className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">Heatmap</p>
-                    <div className="aspect-square bg-slate-100 rounded-lg overflow-hidden border border-slate-200 relative group">
-                       <img src={result.gradcam_url} alt="Grad-CAM" className="w-full h-full object-cover" />
-                    </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">Analysis Overlay</p>
+                  <div className="aspect-square bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg overflow-hidden border-2 border-dashed border-blue-200 flex items-center justify-center">
+                    <span className="text-sm text-slate-500 text-center px-4">
+                      MobileNetV3 analysis complete<br/>
+                      <span className="font-medium text-slate-700">
+                        {result.prediction} ({(result.cancer_probability * 100).toFixed(1)}%)
+                      </span>
+                    </span>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
