@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Loader2, AlertCircle, Activity } from 'lucide-react';
+import { Loader2, AlertCircle, Activity, ExternalLink } from 'lucide-react';
 import { Disclaimer } from './Disclaimer';
 import { apiService } from '../services/apiService';
 import { RecurrenceInput, RecurrenceResponse } from '../types';
@@ -105,8 +105,8 @@ export const RecurrenceView: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
       <div className="lg:col-span-7 space-y-6">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h2 className="text-xl font-semibold text-slate-800 mb-6 border-b border-slate-100 pb-4">
+        <div className="bg-white rounded-xl shadow-md border border-blue-100 p-6">
+          <h2 className="text-xl font-bold text-blue-900 mb-6 border-b border-blue-200 pb-4">
             Clinical Parameters (LightGBM Inputs)
           </h2>
           <form onSubmit={handleSubmit} id="recurrence-form" className="space-y-6">
@@ -234,8 +234,18 @@ export const RecurrenceView: React.FC = () => {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
                   Primary Surgery Code *
+                  <a
+                    href="https://docs.google.com/document/d/1ar-Zu0tZQV5NGikYeMOEq5VlYdc-1hug_VUkLfQlk1A/edit?usp=drive_link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline text-xs"
+                    title="View Surgery Code Reference"
+                  >
+                    <ExternalLink size={14} />
+                    Help
+                  </a>
                 </label>
                 <input
                   type="number"
@@ -301,7 +311,7 @@ export const RecurrenceView: React.FC = () => {
           form="recurrence-form"
           type="submit"
           disabled={loading || !isFormValid()}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2"
+          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-300 disabled:to-slate-400 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all duration-200"
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Predict Recurrence Risk"}
         </button>
@@ -315,18 +325,18 @@ export const RecurrenceView: React.FC = () => {
       </div>
 
       <div className="lg:col-span-5">
-        <div className={`bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-full sticky top-24 ${loading ? 'opacity-50' : ''}`}>
-          <h2 className="text-xl font-semibold text-slate-800 mb-6">Model Prediction</h2>
+        <div className={`bg-white rounded-xl shadow-md border border-blue-100 p-6 h-full sticky top-24 transition-opacity duration-300 ${loading ? 'opacity-50' : ''}`}>
+          <h2 className="text-xl font-bold text-blue-900 mb-6">5-Year Recurrence Risk Assessment</h2>
           {!result ? (
-            <div className="h-64 flex flex-col items-center justify-center text-slate-400 bg-slate-50 rounded-lg border-2 border-dashed border-slate-200">
-              <Activity className="w-12 h-12 mb-3 opacity-20" />
-              <p className="text-sm text-center px-6">Complete all variables to run the model</p>
+            <div className="h-64 flex flex-col items-center justify-center text-blue-300 bg-blue-50 rounded-lg border-2 border-dashed border-blue-200">
+              <Activity className="w-12 h-12 mb-3 opacity-30" />
+              <p className="text-sm text-center px-6 text-blue-600 font-medium">Complete all variables to run the model</p>
             </div>
           ) : (
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-              <div className="text-center p-8 bg-slate-50 rounded-xl border border-slate-100">
-                <p className="text-sm text-slate-500 font-medium mb-2 uppercase tracking-wide">
-                  Recurrence Probability
+              <div className="text-center p-8 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 shadow-sm">
+                <p className="text-xs text-blue-600 font-bold mb-3 uppercase tracking-widest">
+                  5-YEAR RECURRENCE PROBABILITY
                 </p>
                 <div
                   className={`text-6xl font-black mb-6 ${
@@ -348,10 +358,9 @@ export const RecurrenceView: React.FC = () => {
                   {result.risk_category}
                 </div>
               </div>
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                <p className="text-sm text-blue-800 leading-relaxed">
-                  <span className="font-bold">Interpretation:</span> This score estimates probability of poor
-                  outcome based on clinical variables (demographics, site, grade, treatment).
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 shadow-sm">
+                <p className="text-sm text-blue-900 leading-relaxed">
+                  <span className="font-bold text-blue-700">About this score:</span> This AI-driven assessment estimates the probability of cancer recurrence within 5 years based on clinical variables including demographics, tumor site, grade, and treatment modalities. Use alongside professional medical judgment.
                 </p>
               </div>
               <Disclaimer />
