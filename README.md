@@ -1,140 +1,67 @@
-AI-Based Oral Cancer Detection & Recurrence Prediction System
-RVCE Capstone Project | Information Science & Engineering | Dec 2025
+# AI-Based Oral Cancer Detection & Recurrence Prediction System
+RV College of Engineering |Project 2025
+An integrated clinical AI platform designed to assist medical professionals in the early diagnosis of oral lesions and the long-term risk management of cancer recurrence.
 
-/AI-in-Oral-Cancer 🎯 Project Overview
-End-to-end clinical AI system for oral cancer detection (EfficientNetB3) and recurrence risk prediction (LightGBM) using SEER dataset. Deployed as fullstack web app with FastAPI backend + Vue.js frontend.
+🎯 Project Overview
+This system bridges the gap between raw medical data and actionable clinical insights through two specialized AI pipelines:
 
-Clinical Workflow:
+Malignancy Detection: Analyzes visual data from oral lesion images to identify high-probability cancerous growth.
 
-📸 Upload oral lesion image → get cancer probability
+Recurrence Prediction: Processes longitudinal clinical data from the SEER dataset to calculate the risk of cancer returning post-treatment.
 
-🩺 Enter clinical data → get recurrence risk
+🏗️ System Architecture
+The application follows a modern decoupled architecture, ensuring scalability and ease of deployment:
 
-🎨 SHAP explanations + risk badges (Red/Yellow/Green)
+Frontend: A responsive Vue.js dashboard featuring image upload capabilities, clinical form validation, and real-time visualization of SHAP explanations.
 
-🚀 Quick Start (Development)
-Backend (FastAPI)
-bash
-cd backend
-# Install dependencies
-pip install -r requirements.txt
+Backend: A FastAPI REST server that handles asynchronous requests, orchestrates model inference, and provides comprehensive Swagger documentation.
 
-# Start server
-uvicorn main:app --reload --port 8000
-Endpoints: http://127.0.0.1:8000/docs (Swagger UI)
+AI Engine: A dual-model approach utilizing MobileNetV2 for computer vision and LightGBM for tabular data classification.
 
-Frontend (Vue.js)
-bash
-cd frontend
-npm install
-npm run dev
-App: http://localhost:5173
+🔬 Model Methodology
+📸 Detection Pipeline (Computer Vision)
+Model: MobileNetV2 (Pre-trained on ImageNet, fine-tuned on oral lesion datasets).
 
-🏗️ Architecture
-text
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Vue.js UI     │───▶│   FastAPI REST   │───▶│   AI Models     │
-│                 │    │   (CORS Enabled) │    │                 │
-│ • Image Upload  │    │                  │    │ • EfficientNetB3│
-│ • Clinical Form │    │ /api/detect-     │    │   (Detection)   │
-│ • Risk Badges   │    │ cancer (POST)    │    │                 │
-└─────────────────┘    │                  │    │ • LightGBM      │
-                       │ /api/predict-    │    │   (Recurrence)  │
-                       │ recurrence (POST)│    └─────────────────┘
-                       └──────────────────┘
-📁 Folder Structure
-text
-AI-in-Oral-cancer-detection/
-├── backend/
-│   ├── main.py                 # FastAPI dual endpoints + CORS + Swagger
-│   ├── requirements.txt        # TF2.17 + LightGBM + FastAPI
-│   └── models/                 # 6 AI model files (~150MB total)
-│       ├── recurrence_model.pkl
-│       ├── encoders.pkl
-│       ├── feature_names.pkl
-│       ├── frontend_mapping.pkl
-│       └── model.weights.h5    # EfficientNetB3 trained weights
-├── frontend/
-│   ├── src/
-│   │   ├── services/apiService.ts  # Type-safe API calls
-│   │   ├── views/DetectionView.tsx
-│   │   └── views/RecurrenceView.tsx
-│   ├── package.json
-│   └── vite.config.ts
-└── README.md
-🔬 Technical Specifications
-Component	Model	Dataset	Performance	Input	Output
-Detection	EfficientNetB3	Oral lesions	87.3% Acc	300x300 RGB image	Cancer probability (0-1)
-Recurrence	LightGBM	SEER 2023	73.9% Acc, 79.6% AUC	11 clinical features	Risk % + Category
-SEER Features: Age group, site, grade, RX codes, chemo/radiation, tumor counts
+Input: 224x224 RGB images.
 
-🧪 API Endpoints
-bash
-# Detection (Image → Probability)
-POST /api/detect-cancer
-Content-Type: multipart/form-data
-Key: image (File)
+Performance: Achieved 87.3% accuracy through adaptive learning rates and early stopping.
 
-# Response
-{
-  "cancer_probability": 0.873,
-  "confidence": 0.873,
-  "risk_level": "High",
-  "weights_loaded": true
-}
+🩺 Recurrence Pipeline (Tabular Data)
+Model: LightGBM Classifier.
 
-# Recurrence (Clinical → Risk %)
-POST /api/predict-recurrence
-Content-Type: application/json
-{
-  "age_group": "55-59", "site_recode": "Tongue", ...
-}
+Dataset: SEER 2023 (Surveillance, Epidemiology, and End Results).
 
-# Health Check
-GET /health → {"status": "healthy", "detection_model": true}
-⚙️ Production Deployment
-Backend (Docker + Cloud)
-text
-# Dockerfile
-FROM python:3.10-slim
-COPY . /app
-WORKDIR /app
-RUN pip install -r requirements.txt
-CMD ["gunicorn", "main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker"]
-Platforms: Render, Railway, Google Cloud Run, AWS Lambda
+Features: 11 clinical indicators including age, tumor grade, primary site, and treatment history (Radiation/Chemotherapy).
 
-Frontend (Static Hosting)
-bash
-npm run build  # → dist/
-Platforms: Vercel, Netlify, GitHub Pages
+Performance: 79.6% AUC, prioritized for high sensitivity to ensure clinical safety.
 
-📈 Model Training (Reproducible)
-python
-# Detection (EfficientNetB3)
-base = EfficientNetB3(weights=None, include_top=False)
-model = Sequential([base, GlobalAveragePooling2D(), Dense(1, 'sigmoid')])
-model.compile('adam', 'binary_crossentropy')
-model.fit(train_ds, epochs=50, callbacks=[EarlyStopping(patience=10)])
+📁 Project Structure
+/backend: Contains main.py (FastAPI logic), requirements.txt, and the models/ directory housing serialized weights and encoders.
 
-# Recurrence (LightGBM)
-gbm = LGBMClassifier(n_estimators=500, learning_rate=0.05)
-gbm.fit(X_train, y_train)
-🔒 Clinical Safety
-Disclaimer: Decision-support prototype, not diagnostic device
+/frontend: Contains the Vue.js source code, including type-safe API services and custom UI components for risk badges.
+![alt text](image.png)
 
-Input validation: Age bounds, SEER categories, image constraints
+🚀 Quick Start
+Backend Environment
+Navigate to the backend directory, install dependencies via pip, and launch the server using uvicorn. The API documentation will be available at the /docs endpoint.
 
-Calibrated outputs: Probability + risk band + clinician guidance
+Frontend Environment
+Navigate to the frontend directory, install packages via npm, and start the Vite development server to access the dashboard on localhost:5173.
 
-No PHI storage: Stateless predictions only
+🔒 Clinical Safety & Ethics
+Decision Support Only: This platform is a research prototype and is not intended to replace professional medical diagnosis.
 
-📚 References
-SEER Dataset: seer.cancer.gov
+Stateless Processing: No Patient Health Information (PHI) is permanently stored; the system functions on a per-request inference basis.
 
-EfficientNetB3: Tan & Le (2019), arxiv.org/abs/1905.11946
+Explainable AI: Uses SHAP values to provide "why" behind every prediction, fostering clinician trust.
 
-LightGBM: Microsoft (2017), lightgbm.readthedocs.io
+👨‍🎓 Research Team
+Department of Information Science and Engineering | RVCE
 
-👨‍🎓 Student Details
-Prasanna A | Ravi R Naidu | Tentan M S | Yash Shah | 
-Department of Information Science and Engineering | RV College of Engineering
+Prasanna A
+
+Ravi R Naidu
+
+Tentan M S
+
+Yash Shah
