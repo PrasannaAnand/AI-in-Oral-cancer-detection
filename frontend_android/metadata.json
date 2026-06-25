@@ -1,0 +1,5 @@
+{
+  "name": "Oral Cancer Detection & Prediction System",
+  "description": "A research prototype for AI-based oral lesion detection and recurrence risk prediction.",
+  "requestFramePermissions": []
+}
